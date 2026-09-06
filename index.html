@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Pop 韓國女團推薦指南</title>
+
+    <!-- PWA: Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- PWA: 圖示設定 -->
+    <link rel="icon" type="image/x-icon" href="icons/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
+
+    <!-- PWA: iOS 加入主畫面相關設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="K-Pop 指南">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="發掘您下一個最愛的 K-Pop 偶像女團：依世代篩選、隨機驚喜推薦，快速認識各團概念與神曲。">
+
+    <!-- 引入 Tailwind CSS 框架 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定義滾動條與漸層動畫 */
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #ec4899, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.3);
+        }
+        /* 隱藏滾動條但保留滾動功能 (針對模態框) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* 卡片頭部的原創幾何圖樣背景 */
+        .cover-pattern {
+            background-repeat: repeat;
+            transition: transform 0.7s ease;
+        }
+        .group:hover .cover-pattern {
+            transform: scale(1.1);
+        }
+        .official-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #f9a8d4;
+            transition: color 0.2s;
+        }
+        .official-link:hover {
+            color: #f472b6;
+            text-decoration: underline;
+        }
+        #install-btn {
+            display: none;
+        }
+        #install-btn.visible {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans">
+
+    <!-- 頂部導航與標題 -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-10 shadow-md">
+        <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">
+                    <span class="gradient-text">K-Pop</span> 女團推薦指南
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">發掘您下一個最愛的 K-Pop 偶像團體</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="install-btn" onclick="installApp()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-3 px-5 rounded-full shadow border border-slate-700 transition items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v3.19L7.03 8.72a.75.75 0 10-1.06 1.06l3.5 3.5a.75.75 0 001.06 0l3.5-3.5a.75.75 0 10-1.06-1.06l-2.22 2.22V6.75z" clip-rule="evenodd" />
+                    </svg>
+                    安裝 App
+                </button>
+                <button onclick="showRandomRecommendation()" class="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                    </svg>
+                    驚喜推薦
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 離線提示 Banner -->
+    <div id="offline-banner" class="hidden bg-yellow-500 text-slate-900 text-sm font-semibold text-center py-2 px-4">
+        目前處於離線狀態，顯示的是先前快取的內容。
+    </div>
+
+    <!-- 主要內容區 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+
+        <!-- 篩選器 -->
+        <div class="mb-10">
+            <h2 class="text-xl font-semibold mb-4 text-slate-300 border-l-4 border-pink-500 pl-3">依世代篩選</h2>
+            <div class="flex flex-wrap gap-3" id="filter-container">
+                <button onclick="filterGroups('all')" class="filter-btn active bg-pink-600 text-white px-5 py-2 rounded-full font-medium transition" data-gen="all">全部 (All)</button>
+                <button onclick="filterGroups('2代')" class="filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2 rounded-full font-medium transition" data-gen="2代">二代 (2nd Gen)</button>
+                <button onclick="filterGroups('3代')" class="filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2 rounded-full font-medium transition" data-gen="3代">三代 (3rd Gen)</button>
+                <button onclick="filterGroups('4代')" class="filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2 rounded-full font-medium transition" data-gen="4代">四代 (4th Gen)</button>
+                <button onclick="filterGroups('5代')" class="filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2 rounded-full font-medium transition" data-gen="5代">五代 (5th Gen)</button>
+            </div>
+        </div>
+
+        <!-- 女團卡片網格 -->
+        <div id="groups-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- 卡片內容將由 JavaScript 動態生成 -->
+        </div>
+
+        <!-- 空狀態顯示 (搜尋無結果時) -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center py-20 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-lg">目前沒有符合該世代的女團資料。</p>
+        </div>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-6 text-center text-slate-500 mt-auto">
+        <p>© 2026 K-Pop Girl Groups Recommender. 純屬娛樂與推薦用途。</p>
+        <p class="text-xs mt-1 text-slate-600">卡片背景為依各團概念設計之原創幾何圖樣，並非官方封面；請點選「官方封面」連結至 Spotify 查看正式專輯圖。</p>
+    </footer>
+
+    <!-- 隨機推薦模態框 (Modal) -->
+    <div id="recommendation-modal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-opacity duration-300 opacity-0">
+        <div class="bg-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content-box">
+
+            <div id="modal-image-container" class="h-48 w-full relative flex items-center justify-center bg-cover bg-center">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-800 to-transparent opacity-90"></div>
+
+                <button onclick="closeModal()" class="absolute top-4 right-4 bg-black bg-opacity-50 hover:bg-opacity-80 text-white rounded-full p-2 transition z-20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+                <h2 id="modal-group-name" class="text-4xl font-black text-white tracking-widest drop-shadow-2xl text-center px-4 relative z-10"></h2>
+            </div>
+
+            <div class="p-6 md:p-8">
+                <div class="flex items-center justify-between mb-4">
+                    <span id="modal-group-gen" class="px-3 py-1 bg-pink-500 bg-opacity-20 text-pink-400 rounded-full text-xs font-bold uppercase tracking-wider border border-pink-500 border-opacity-30"></span>
+                    <span id="modal-group-agency" class="text-slate-400 text-sm font-medium"></span>
+                </div>
+
+                <h3 class="text-xl font-bold mb-2 text-white border-b border-slate-700 pb-2">團體介紹</h3>
+                <p id="modal-group-desc" class="text-slate-300 mb-6 leading-relaxed text-sm"></p>
+
+                <h3 class="text-xl font-bold mb-3 text-white border-b border-slate-700 pb-2">必聽神曲推薦 🎧</h3>
+                <ul id="modal-group-songs" class="space-y-2 mb-4 text-sm">
+                    <!-- 歌曲列表將動態插入 -->
+                </ul>
+
+                <a id="modal-official-link" href="#" target="_blank" rel="noopener" class="official-link mb-6 inline-block">
+                    查看官方專輯封面 (Spotify) ↗
+                </a>
+
+                <button onclick="closeModal()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-xl transition duration-200">
+                    了解了，謝謝推薦！
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 邏輯 -->
+    <script>
+        // K-Pop 女團資料庫
+        // 註：background 欄位為依各團體概念設計的「原創幾何圖樣」（純 CSS 漸層/圖形），
+        // 並非真實專輯封面或藝人照片（版權因素無法直接嵌入）。
+        // officialQuery 欄位用於連結至 Spotify 搜尋，方便使用者查看正式的官方封面。
+        const kpopGroups = [
+            {
+                id: 1,
+                name: "BLACKPINK",
+                gen: "3代",
+                agency: "YG Entertainment",
+                concept: "Girl Crush / 國際化",
+                description: "全球最知名的 K-Pop 女團之一，以強烈的 Girl Crush 風格、洗腦的節奏和極具辨識度的時尚感聞名。每位成員都是國際知名時尚品牌的代言人。",
+                songs: ["DDU-DU DDU-DU", "How You Like That", "Pink Venom"],
+                background: "repeating-linear-gradient(45deg, #ec4899 0px 18px, #0a0a0a 18px 36px)",
+                bgSize: "auto",
+                officialQuery: "BLACKPINK"
+            },
+            {
+                id: 2,
+                name: "TWICE",
+                gen: "3代",
+                agency: "JYP Entertainment",
+                concept: "元氣活力 / 甜美流行",
+                description: "K-Pop 三代女團代表，初期以甜美可愛的風格席捲全亞洲，創造了無數傳唱度極高的國民神曲，近期逐漸轉型為成熟優雅風格。",
+                songs: ["FANCY", "Feel Special", "What is Love?"],
+                background: "radial-gradient(circle at 20% 30%, rgba(255,255,255,0.35) 0 8%, transparent 9%), radial-gradient(circle at 70% 20%, rgba(255,255,255,0.28) 0 6%, transparent 7%), radial-gradient(circle at 85% 75%, rgba(255,255,255,0.3) 0 10%, transparent 11%), radial-gradient(circle at 35% 78%, rgba(255,255,255,0.25) 0 7%, transparent 8%), radial-gradient(circle at 55% 48%, rgba(255,255,255,0.22) 0 5%, transparent 6%), linear-gradient(135deg, #fb923c, #f472b6)",
+                bgSize: "auto",
+                officialQuery: "TWICE"
+            },
+            {
+                id: 3,
+                name: "aespa",
+                gen: "4代",
+                agency: "SM Entertainment",
+                concept: "元宇宙 / 前衛概念",
+                description: "擁有獨特的「AI 虛擬替身」元宇宙世界觀，歌曲風格融合了強烈的電子音效與前衛的 Hyperpop 元素，舞台表演充滿科技感與力量。",
+                songs: ["Next Level", "Savage", "Supernova"],
+                background: "repeating-linear-gradient(0deg, rgba(147,197,253,0.3) 0 1px, transparent 1px 32px), repeating-linear-gradient(90deg, rgba(147,197,253,0.3) 0 1px, transparent 1px 32px), linear-gradient(135deg, #7c3aed, #3b82f6)",
+                bgSize: "auto",
+                officialQuery: "aespa"
+            },
+            {
+                id: 4,
+                name: "NewJeans",
+                gen: "4代",
+                agency: "ADOR",
+                concept: "Y2K / 輕鬆聽感",
+                description: "出道即巔峰的現象級女團。打破傳統 K-Pop 的高音與強烈節奏，以千禧年 Y2K 風格和輕鬆悅耳 (Easy-listening) 的 R&B 舞曲引領全新潮流。",
+                songs: ["Hype Boy", "Ditto", "Super Shy"],
+                background: "repeating-conic-gradient(#93c5fd 0deg 90deg, #eff6ff 90deg 180deg)",
+                bgSize: "44px 44px",
+                officialQuery: "NewJeans"
+            },
+            {
+                id: 5,
+                name: "IVE",
+                gen: "4代",
+                agency: "Starship Entertainment",
+                concept: "自戀優雅 / 千金風",
+                description: "以「已經準備好的完成型女團」為口號，歌曲多探討自我愛戀與自信，視覺風格華麗優雅，充滿貴族與高級時尚感。",
+                songs: ["LOVE DIVE", "After LIKE", "I AM"],
+                background: "repeating-linear-gradient(45deg, rgba(255,215,0,0.28) 0 2px, transparent 2px 24px), repeating-linear-gradient(-45deg, rgba(255,215,0,0.28) 0 2px, transparent 2px 24px), linear-gradient(135deg, #ef4444, #db2777)",
+                bgSize: "auto",
+                officialQuery: "IVE"
+            },
+            {
+                id: 6,
+                name: "LE SSERAFIM",
+                gen: "4代",
+                agency: "Source Music (HYBE)",
+                concept: "無畏強勢 / 運動力量",
+                description: "團名源自「I'M FEARLESS」的易位構詞。主打強大的女性自信、不畏世俗眼光的態度，以及極具爆發力和整齊度的刀群舞表演。",
+                songs: ["ANTIFRAGILE", "UNFORGIVEN", "EASY"],
+                background: "repeating-linear-gradient(120deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 20px), repeating-linear-gradient(60deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 20px), linear-gradient(135deg, #334155, #0f172a)",
+                bgSize: "auto",
+                officialQuery: "LE SSERAFIM"
+            },
+            {
+                id: 7,
+                name: "少女時代 (SNSD)",
+                gen: "2代",
+                agency: "SM Entertainment",
+                concept: "傳奇女團 / 百變風格",
+                description: "韓流走向世界的推手，被譽為「永遠的女團教科書」。從國民初戀到強勢御姐，完美駕馭各種風格，是許多後輩女團的偶像。",
+                songs: ["Gee", "Genie", "Into The New World"],
+                background: "radial-gradient(circle, rgba(255,255,255,0.6) 1.5px, transparent 1.6px) 0 0/18px 18px, linear-gradient(135deg, #f9a8d4, #ec4899)",
+                bgSize: "auto",
+                officialQuery: "Girls' Generation"
+            },
+            {
+                id: 8,
+                name: "Red Velvet",
+                gen: "3代",
+                agency: "SM Entertainment",
+                concept: "怪誕童話 / R&B",
+                description: "團名代表著強烈迷人的「Red」與柔軟優雅的「Velvet」。概念常帶有黑色幽默與童話色彩，音樂品質極高，和聲與和弦編排是業界頂尖。",
+                songs: ["Psycho", "Bad Boy", "Feel My Rhythm"],
+                background: "radial-gradient(circle at 25% 25%, rgba(255,255,255,0.14) 0 6%, transparent 7%), radial-gradient(circle at 75% 60%, rgba(255,255,255,0.12) 0 8%, transparent 9%), radial-gradient(circle at 50% 90%, rgba(255,255,255,0.1) 0 5%, transparent 6%), linear-gradient(135deg, #991b1b, #450a0a)",
+                bgSize: "auto",
+                officialQuery: "Red Velvet"
+            },
+            {
+                id: 9,
+                name: "BABYMONSTER",
+                gen: "5代",
+                agency: "YG Entertainment",
+                concept: "嘻哈 / 怪物新人",
+                description: "YG 繼 BLACKPINK 後時隔多年推出的女團，成員擁有怪物級的歌唱與Rap實力，承襲了家族標誌性的強烈嘻哈與自信風格。",
+                songs: ["SHEESH", "BATTER UP", "Stuck In The Middle"],
+                background: "repeating-linear-gradient(100deg, #000000 0 60px, #7f1d1d 60px 90px, #000000 90px 150px)",
+                bgSize: "auto",
+                officialQuery: "BABYMONSTER"
+            },
+            {
+                id: 10,
+                name: "ITZY",
+                gen: "4代",
+                agency: "JYP Entertainment",
+                concept: "Teen Crush / 做自己",
+                description: "以充滿活力的 Teen Crush 風格出道，主打「我就是我 (I love myself)」的核心理念，擁有極具力量的高難度舞蹈編排。",
+                songs: ["WANNABE", "DALLA DALLA", "Not Shy"],
+                background: "repeating-conic-gradient(from 0deg, #facc15 0deg 15deg, #f97316 15deg 30deg)",
+                bgSize: "auto",
+                officialQuery: "ITZY"
+            },
+            {
+                id: 11,
+                name: "ILLIT",
+                gen: "5代",
+                agency: "Belift Lab (HYBE)",
+                concept: "夢幻可愛 / 電子流行",
+                description: "透過選秀節目誕生，出道曲以極具洗腦魔力的夢幻電子合成器音效與魔性可愛的舞蹈動作迅速在全球網路竄紅。",
+                songs: ["Magnetic", "Lucky Girl Syndrome", "My World"],
+                background: "radial-gradient(circle at 15% 30%, rgba(255,255,255,0.5) 0 10%, transparent 11%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.35) 0 14%, transparent 15%), radial-gradient(circle at 60% 78%, rgba(255,255,255,0.4) 0 12%, transparent 13%), radial-gradient(circle at 30% 82%, rgba(255,255,255,0.3) 0 8%, transparent 9%), linear-gradient(135deg, #d8b4fe, #f9a8d4)",
+                bgSize: "auto",
+                officialQuery: "ILLIT"
+            },
+            {
+                id: 12,
+                name: "(G)I-DLE",
+                gen: "4代",
+                agency: "Cube Entertainment",
+                concept: "自給自足 / 概念破壞者",
+                description: "以隊長小娟為核心的全創作女團。每次回歸都親自參與企劃與詞曲創作，不畏懼打破社會常規，歌曲常帶有強烈的女性自主意識。",
+                songs: ["TOMBOY", "Nxde", "Queencard"],
+                background: "radial-gradient(ellipse at 20% 30%, rgba(255,255,255,0.15) 0 20%, transparent 21%), radial-gradient(ellipse at 70% 65%, rgba(0,0,0,0.2) 0 25%, transparent 26%), radial-gradient(circle at 50% 20%, rgba(255,255,255,0.1) 0 15%, transparent 16%), linear-gradient(135deg, #ef4444, #7e22ce)",
+                bgSize: "auto",
+                officialQuery: "(G)I-DLE"
+            }
+        ];
+
+        function spotifySearchUrl(query) {
+            return "https://open.spotify.com/search/" + encodeURIComponent(query);
+        }
+
+        // 渲染卡片函數
+        function renderCards(groupsToRender) {
+            const grid = document.getElementById('groups-grid');
+            const emptyState = document.getElementById('empty-state');
+            grid.innerHTML = ''; // 清空現有卡片
+
+            if (groupsToRender.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            groupsToRender.forEach(group => {
+                const card = document.createElement('div');
+                card.className = 'group bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700 card-hover flex flex-col h-full';
+
+                // 動態生成帶有原創幾何圖樣的卡片頭部（取代真實封面圖，避免版權問題）
+                card.innerHTML = `
+                    <div class="h-40 bg-slate-900 flex items-center justify-center relative overflow-hidden">
+                        <!-- 原創幾何圖樣背景 -->
+                        <div class="cover-pattern absolute inset-0" style="background-image: ${group.background}; background-size: ${group.bgSize};"></div>
+                        <!-- 漸層疊加，確保團名文字清晰可讀 -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent opacity-90"></div>
+
+                        <h3 class="text-3xl font-black text-white text-center tracking-wider drop-shadow-xl z-10 break-words relative transform transition duration-500 group-hover:scale-105">${group.name}</h3>
+                    </div>
+
+                    <div class="p-5 flex-grow flex flex-col">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="inline-block px-2 py-1 bg-slate-700 text-pink-400 text-xs font-semibold rounded uppercase tracking-wide">
+                                ${group.gen}
+                            </span>
+                            <span class="text-xs text-slate-400 font-medium bg-slate-900 px-2 py-1 rounded">${group.agency}</span>
+                        </div>
+
+                        <div class="mb-4">
+                            <span class="text-sm font-bold text-slate-200 block mb-1">主打概念：</span>
+                            <p class="text-purple-300 text-sm font-medium">${group.concept}</p>
+                        </div>
+
+                        <div class="mb-4 flex-grow">
+                            <p class="text-slate-400 text-sm line-clamp-3">${group.description}</p>
+                        </div>
+
+                        <div class="mt-auto border-t border-slate-700 pt-3">
+                            <span class="text-xs text-slate-400 mb-2 block">熱門歌曲：</span>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                ${group.songs.map(song => `<span class="text-xs bg-slate-700 text-slate-200 px-2 py-1 rounded shadow-sm border border-slate-600">${song}</span>`).join('')}
+                            </div>
+                            <a href="${spotifySearchUrl(group.officialQuery)}" target="_blank" rel="noopener" class="official-link">
+                                查看官方封面 (Spotify) ↗
+                            </a>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // 篩選功能
+        function filterGroups(gen) {
+            // 更新按鈕樣式
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => {
+                if (btn.dataset.gen === gen) {
+                    btn.classList.remove('bg-slate-800', 'text-slate-300');
+                    btn.classList.add('bg-pink-600', 'text-white');
+                } else {
+                    btn.classList.remove('bg-pink-600', 'text-white');
+                    btn.classList.add('bg-slate-800', 'text-slate-300');
+                }
+            });
+
+            // 執行篩選
+            if (gen === 'all') {
+                renderCards(kpopGroups);
+            } else {
+                const filtered = kpopGroups.filter(group => group.gen === gen);
+                renderCards(filtered);
+            }
+        }
+
+        // 隨機推薦功能 (驚喜推薦)
+        function showRandomRecommendation() {
+            const randomIndex = Math.floor(Math.random() * kpopGroups.length);
+            const group = kpopGroups[randomIndex];
+
+            // 填充模態框資料
+            const modalImageContainer = document.getElementById('modal-image-container');
+
+            // 設置原創幾何圖樣背景
+            modalImageContainer.style.backgroundImage = group.background;
+            modalImageContainer.style.backgroundSize = group.bgSize;
+
+            document.getElementById('modal-group-name').textContent = group.name;
+            document.getElementById('modal-group-gen').textContent = `${group.gen}女團`;
+            document.getElementById('modal-group-agency').textContent = group.agency;
+            document.getElementById('modal-group-desc').textContent = group.description;
+            document.getElementById('modal-official-link').href = spotifySearchUrl(group.officialQuery);
+
+            // 生成歌曲列表
+            const songsList = document.getElementById('modal-group-songs');
+            songsList.innerHTML = '';
+            group.songs.forEach(song => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center gap-2 text-slate-300 bg-slate-900 bg-opacity-50 p-2 rounded-lg';
+                li.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pink-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+                    </svg>
+                    <span>${song}</span>
+                `;
+                songsList.appendChild(li);
+            });
+
+            // 顯示模態框 (帶動畫效果)
+            const modal = document.getElementById('recommendation-modal');
+            const modalContent = document.getElementById('modal-content-box');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // 觸發重繪以應用動畫
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.classList.add('opacity-100');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        // 關閉模態框
+        function closeModal() {
+            const modal = document.getElementById('recommendation-modal');
+            const modalContent = document.getElementById('modal-content-box');
+
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+
+            // 等待動畫完成後隱藏
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // 點擊模態框背景關閉
+        document.getElementById('recommendation-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // 頁面載入完成後初始化渲染
+        window.addEventListener('DOMContentLoaded', () => {
+            renderCards(kpopGroups);
+        });
+
+        // ---------- PWA: Service Worker 註冊 ----------
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker 註冊成功:', reg.scope))
+                    .catch(err => console.error('Service Worker 註冊失敗:', err));
+            });
+        }
+
+        // ---------- PWA: 安裝提示按鈕 ----------
+        let deferredInstallPrompt = null;
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            installBtn.classList.add('visible');
+        });
+
+        function installApp() {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.finally(() => {
+                deferredInstallPrompt = null;
+                installBtn.classList.remove('visible');
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            installBtn.classList.remove('visible');
+        });
+
+        // ---------- PWA: 離線狀態提示 Banner ----------
+        const offlineBanner = document.getElementById('offline-banner');
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineBanner.classList.add('hidden');
+            } else {
+                offlineBanner.classList.remove('hidden');
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+    </script>
+</body>
+</html>
